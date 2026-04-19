@@ -21,7 +21,8 @@ public class MemberService : IMemberService
         {
             Id = m.Id,
             FullName = m.FullName,
-            Email = m.Email
+            Email = m.Email,
+            MembershipDate = m.MembershipDate
         }).ToList();
     }
 
@@ -38,7 +39,8 @@ public class MemberService : IMemberService
         {
             Id = member.Id,
             FullName = member.FullName,
-            Email = member.Email
+            Email = member.Email,
+            MembershipDate = member.MembershipDate
         };
     }
 
@@ -48,7 +50,8 @@ public class MemberService : IMemberService
         {
             Id = Guid.NewGuid(),
             FullName = request.FullName,
-            Email = request.Email
+            Email = request.Email,
+            MembershipDate = DateTime.UtcNow
         };
 
         var created = await _memberRepository.AddAsync(member);
@@ -57,7 +60,36 @@ public class MemberService : IMemberService
         {
             Id = created.Id,
             FullName = created.FullName,
-            Email = created.Email
+            Email = created.Email,
+            MembershipDate = created.MembershipDate
         };
+    }
+
+    public async Task<MemberResponse?> UpdateMemberAsync(Guid id, CreateMemberRequest request)
+    {
+        var member = await _memberRepository.GetByIdAsync(id);
+
+        if (member is null)
+        {
+            return null;
+        }
+
+        member.FullName = request.FullName;
+        member.Email = request.Email;
+
+        var updated = await _memberRepository.UpdateAsync(member);
+
+        return new MemberResponse
+        {
+            Id = updated.Id,
+            FullName = updated.FullName,
+            Email = updated.Email,
+            MembershipDate = updated.MembershipDate
+        };
+    }
+
+    public async Task<bool> DeleteMemberAsync(Guid id)
+    {
+        return await _memberRepository.DeleteAsync(id);
     }
 }

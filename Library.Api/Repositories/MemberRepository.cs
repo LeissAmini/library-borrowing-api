@@ -29,4 +29,25 @@ public class MemberRepository : IMemberRepository
         await _context.SaveChangesAsync();
         return member;
     }
+
+    public async Task<Member> UpdateAsync(Member member)
+    {
+        _context.Members.Update(member);
+        await _context.SaveChangesAsync();
+        return member;
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var member = await _context.Members.FindAsync(id);
+
+        if (member is null)
+        {
+            return false;
+        }
+
+        _context.Members.Remove(member);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

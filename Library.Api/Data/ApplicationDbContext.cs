@@ -10,4 +10,5 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Member> Members => Set<Member>();
+    public DbSet<BorrowRecord> BorrowRecords => Set<BorrowRecord>();
 }
