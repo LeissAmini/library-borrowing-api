@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Library.Api.Models;
 
 public class Book
@@ -9,6 +11,8 @@ public class Book
     public string ISBN { get; set; } = string.Empty;
 
     public int TotalCopies { get; set; }
+
+    [ConcurrencyCheck]
     public int AvailableCopies { get; set; }
 
 }
