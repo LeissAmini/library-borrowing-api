@@ -1,0 +1,12 @@
+using Library.Api.Models;
+
+namespace Library.Api.Repositories;
+
+public interface IBookRepository
+{
+    Task<List<Book>> GetAllAsync();
+    Task<Book?> GetByIdAsync(Guid id);
+    Task<Book> AddAsync(Book book);
+    Task<Book> UpdateAsync(Book book);
+    Task<bool> DeleteAsync(Guid id);
+}
