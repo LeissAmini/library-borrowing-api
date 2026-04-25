@@ -32,6 +32,7 @@ app.UseExceptionHandler(errApp => errApp.Run(async context =>
     var (status, message) = ex switch
     {
         KeyNotFoundException => (StatusCodes.Status404NotFound, ex.Message),
+        ArgumentException => (StatusCodes.Status400BadRequest, ex.Message),
         InvalidOperationException => (StatusCodes.Status409Conflict, ex.Message),
         DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "This book is currently unavailable."),
         _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")

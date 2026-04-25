@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Library.Api.DTOs;
 using Library.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +32,6 @@ public class BorrowController : ControllerBase
   [HttpPost("borrow")]
   public async Task<ActionResult<BorrowRecordResult>> BorrowBook([FromBody] BorrowRequest request)
   {
-    Console.WriteLine("BorrowBook called with BookId: {0}, MemberId: {1}, BorrowDate: {2}", request.BookId, request.MemberId, request.BorrowDate);
     var borrowRecord = await _borrowService.BorrowBookAsync(request);
     return Ok(borrowRecord);
   }
