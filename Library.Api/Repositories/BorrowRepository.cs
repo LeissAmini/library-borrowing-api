@@ -15,24 +15,60 @@ namespace Library.Api.Repositories
 
     public async Task<IEnumerable<BorrowRecord>> GetAllBorrowRecordsAsync()
     {
-      return await _context.BorrowRecords.ToListAsync();
+      return await _context.BorrowRecords
+      .AsNoTracking()
+      .ToListAsync();
     }
 
-    public async Task<BorrowRecord?> GetBorrowRecordByMemberIdAsync(Guid memberId)
+    public async Task<IEnumerable<BorrowRecord>> GetBorrowRecordsByMemberIdAsync(Guid memberId)
     {
-      return await _context.BorrowRecords.FindAsync(memberId);
+      return await _context.BorrowRecords
+      .AsNoTracking()
+      .Where(br => br.MemberId == memberId)
+      .ToListAsync();
     }
 
-    public async Task<BorrowRecord> AddBorrowRecordAsync(BorrowRecord borrowRecord)
+    public async Task<BorrowRecord?> GetBorrowRecordByIdAsync(Guid borrowRecordId)
+    {
+      return await _context.BorrowRecords.FindAsync(borrowRecordId);
+    }
+
+    public async Task<BorrowRecord?> GetActiveBorrowRecordByIdAndMemberAsync(Guid borrowRecordId, Guid memberId)
+    {
+      return await _context.BorrowRecords
+        .FirstOrDefaultAsync(br =>
+          br.Id == borrowRecordId &&
+          br.MemberId == memberId &&
+          br.ReturnDate == null);
+    }
+
+    public async Task<bool> HasActiveBorrowRecordAsync(Guid bookId, Guid memberId)
+    {
+      return await _context.BorrowRecords
+        .AnyAsync(br =>
+          br.BookId == bookId &&
+          br.MemberId == memberId &&
+          br.ReturnDate == null);
+    }
+
+    public async Task<Book?> GetBookByIdAsync(Guid bookId)
+    {
+      return await _context.Books.FindAsync(bookId);
+    }
+
+    public async Task<Member?> GetMemberByIdAsync(Guid memberId)
+    {
+      return await _context.Members.FindAsync(memberId);
+    }
+
+    public Task AddBorrowRecordAsync(BorrowRecord borrowRecord)
     {
       _context.BorrowRecords.Add(borrowRecord);
-      await _context.SaveChangesAsync();
-      return borrowRecord;
+      return Task.CompletedTask;
     }
 
-    public async Task UpdateBorrowRecordAsync(BorrowRecord borrowRecord)
+    public async Task SaveChangesAsync()
     {
-      _context.BorrowRecords.Update(borrowRecord);
       await _context.SaveChangesAsync();
     }
   }

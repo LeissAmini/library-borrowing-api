@@ -52,3 +52,17 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Tests
+Library.Api.Tests/
+
+# Other API Models For Test Purposes
+Book.cs
+Member.cs
+
+# Dont need to add in db will create new when merged
+
+Migrations/
+
+Data/
+

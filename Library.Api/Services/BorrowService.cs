@@ -1,6 +1,7 @@
 using Library.Api.DTOs;
 using Library.Api.Models;
 using Library.Api.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Library.Api.Services
 {
@@ -15,48 +16,86 @@ namespace Library.Api.Services
 
         public async Task<BorrowRecordResult> BorrowBookAsync(BorrowRequest request)
         {
-            // Create a new borrow record
-            var borrowRecord = new BorrowRecord
+            var member = await _borrowRepository.GetMemberByIdAsync(request.MemberId);
+            if (member == null)
+            {
+                throw new KeyNotFoundException($"Member {request.MemberId} not found.");
+            }
+
+            if (!member.IsActive)
+            {
+                throw new InvalidOperationException("This member's account is inactive.");
+            }
+
+            var book = await _borrowRepository.GetBookByIdAsync(request.BookId);
+            if (book == null)
+            {
+                throw new KeyNotFoundException($"Book {request.BookId} not found.");
+            }
+
+            var alreadyBorrowed = await _borrowRepository.HasActiveBorrowRecordAsync(request.BookId, request.MemberId);
+            if (alreadyBorrowed)
+            {
+                throw new InvalidOperationException("This member already has an active borrow for this book.");
+            }
+
+            if (book.AvailableCopies <= 0)
+            {
+                throw new InvalidOperationException("This book is currently unavailable.");
+            }
+
+            book.AvailableCopies -= 1;
+
+            var record = new BorrowRecord
             {
                 Id = Guid.NewGuid(),
                 BookId = request.BookId,
                 MemberId = request.MemberId,
-                BorrowDate = request.BorrowDate,
-                ReturnDate = null,
-                Status = true
+                BorrowDate = request.BorrowDate == default ? DateTime.UtcNow : request.BorrowDate,
+                ReturnDate = null
             };
 
-            var created = await _borrowRepository.AddBorrowRecordAsync(borrowRecord);
-            return MapToResult(created);
+            await _borrowRepository.AddBorrowRecordAsync(record);
+            try
+            {
+                await _borrowRepository.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new InvalidOperationException("This book is currently unavailable.");
+            }
+            return MapToResult(record);
         }
 
         public async Task<BorrowRecordResult> ReturnBookAsync(ReturnRequest request)
         {
-            // Return book by updating the existing borrow record
-            var record = await _borrowRepository.GetBorrowRecordByMemberIdAsync(request.BorrowRecordId);
+            var record = await _borrowRepository.GetActiveBorrowRecordByIdAndMemberAsync(request.BorrowRecordId, request.MemberId);
             if (record == null)
-                throw new KeyNotFoundException($"Borrow record {request.BorrowRecordId} not found.");
+            {
+                throw new InvalidOperationException("No active borrow record found for this book and member.");
+            }
 
-            if (!record.Status)
-                throw new InvalidOperationException("This book has already been returned.");
+            var book = await _borrowRepository.GetBookByIdAsync(record.BookId);
+            if (book == null)
+            {
+                throw new KeyNotFoundException($"Book {record.BookId} not found.");
+            }
 
-            record.ReturnDate = request.ReturnDate;
-            record.Status = false;
+            record.ReturnDate = request.ReturnDate == default ? DateTime.UtcNow : request.ReturnDate;
+            book.AvailableCopies += 1;
 
-            await _borrowRepository.UpdateBorrowRecordAsync(record);
+            await _borrowRepository.SaveChangesAsync();
             return MapToResult(record);
         }
 
         public async Task<IEnumerable<BorrowRecordResult>> GetBorrowRecordsByMemberIdAsync(Guid memberId)
         {
-            // Get all records and filter by member ID (since we don't have a direct query method in the repository)
-            var records = await _borrowRepository.GetAllBorrowRecordsAsync();
-            return records.Where(r => r.MemberId == memberId).Select(MapToResult);
+            var records = await _borrowRepository.GetBorrowRecordsByMemberIdAsync(memberId);
+            return records.Select(MapToResult);
         }
 
         public async Task<IEnumerable<BorrowRecordResult>> GetAllBorrowRecordsAsync()
         {
-            // Get all borrow records
             var records = await _borrowRepository.GetAllBorrowRecordsAsync();
             return records.Select(MapToResult);
         }
