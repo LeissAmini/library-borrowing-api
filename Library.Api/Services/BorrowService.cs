@@ -22,11 +22,6 @@ namespace Library.Api.Services
                 throw new KeyNotFoundException($"Member {request.MemberId} not found.");
             }
 
-            if (!member.IsActive)
-            {
-                throw new InvalidOperationException("This member's account is inactive.");
-            }
-
             var book = await _borrowRepository.GetBookByIdAsync(request.BookId);
             if (book == null)
             {
@@ -82,6 +77,7 @@ namespace Library.Api.Services
             }
 
             record.ReturnDate = request.ReturnDate == default ? DateTime.UtcNow : request.ReturnDate;
+            record.Status = "Returned";
             book.AvailableCopies += 1;
 
             await _borrowRepository.SaveChangesAsync();
@@ -106,7 +102,8 @@ namespace Library.Api.Services
             BookId = record.BookId,
             MemberId = record.MemberId,
             BorrowDate = record.BorrowDate,
-            ReturnDate = record.ReturnDate
+            ReturnDate = record.ReturnDate,
+            Status = record.Status
         };
     }
 }
