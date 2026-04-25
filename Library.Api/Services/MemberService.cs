@@ -1,6 +1,7 @@
 using Library.Api.DTOs;
 using Library.Api.Models;
 using Library.Api.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Library.Api.Services;
 
@@ -90,6 +91,13 @@ public class MemberService : IMemberService
 
     public async Task<bool> DeleteMemberAsync(Guid id)
     {
-        return await _memberRepository.DeleteAsync(id);
+        try
+        {
+            return await _memberRepository.DeleteAsync(id);
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException("Cannot delete a member who has existing borrow records.");
+        }
     }
 }
