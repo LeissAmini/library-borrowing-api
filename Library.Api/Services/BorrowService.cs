@@ -2,16 +2,19 @@ using Library.Api.DTOs;
 using Library.Api.Models;
 using Library.Api.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Library.Api.Services
 {
     public class BorrowService : IBorrowService
     {
         private readonly IBorrowRepository _borrowRepository;
+        private readonly IMemoryCache _cache;
 
-        public BorrowService(IBorrowRepository borrowRepository)
+        public BorrowService(IBorrowRepository borrowRepository, IMemoryCache cache)
         {
             _borrowRepository = borrowRepository;
+            _cache = cache;
         }
 
         public async Task<BorrowRecordResult> BorrowBookAsync(BorrowRequest request)
@@ -59,6 +62,7 @@ namespace Library.Api.Services
             {
                 throw new InvalidOperationException("This book is currently unavailable.");
             }
+            _cache.Remove("all_books");
             return MapToResult(record);
         }
 
@@ -81,6 +85,7 @@ namespace Library.Api.Services
             book.AvailableCopies += 1;
 
             await _borrowRepository.SaveChangesAsync();
+            _cache.Remove("all_books");
             return MapToResult(record);
         }
 
