@@ -25,21 +25,51 @@ public class BorrowController : ControllerBase
   [HttpGet("member/{memberId}")]
   public async Task<ActionResult<IEnumerable<BorrowRecordResult>>> GetBorrowRecordsByMemberId(Guid memberId)
   {
-    var borrowRecords = await _borrowService.GetBorrowRecordsByMemberIdAsync(memberId);
-    return Ok(borrowRecords);
+    try
+    {
+      var borrowRecords = await _borrowService.GetBorrowRecordsByMemberIdAsync(memberId);
+      return Ok(borrowRecords);
+    }
+    catch (KeyNotFoundException ex)
+    {
+      return NotFound(ex.Message);
+    }
+    
   }
 
   [HttpPost("borrow")]
   public async Task<ActionResult<BorrowRecordResult>> BorrowBook([FromBody] BorrowRequest request)
   {
-    var borrowRecord = await _borrowService.BorrowBookAsync(request);
-    return Ok(borrowRecord);
+    try
+    {
+      var borrowRecord = await _borrowService.BorrowBookAsync(request);
+      return Ok(borrowRecord);
+    }
+    catch (KeyNotFoundException ex)
+    {
+      return NotFound(ex.Message);
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Conflict(ex.Message);
+    }
   }
 
   [HttpPost("return")]
   public async Task<ActionResult<BorrowRecordResult>> ReturnBook([FromBody] ReturnRequest request)
   {
-    var borrowRecord = await _borrowService.ReturnBookAsync(request);
-    return Ok(borrowRecord);
+    try
+    {
+      var borrowRecord = await _borrowService.ReturnBookAsync(request);
+      return Ok(borrowRecord);
+    }
+    catch (KeyNotFoundException ex)
+    {
+      return NotFound(ex.Message);
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Conflict(ex.Message);
+    }
   }
 }

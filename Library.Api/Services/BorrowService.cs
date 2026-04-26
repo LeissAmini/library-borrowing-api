@@ -91,6 +91,10 @@ namespace Library.Api.Services
 
         public async Task<IEnumerable<BorrowRecordResult>> GetBorrowRecordsByMemberIdAsync(Guid memberId)
         {
+            var member = await _borrowRepository.GetMemberByIdAsync(memberId);
+            if (member == null)
+                throw new KeyNotFoundException($"Member {memberId} not found.");
+
             var records = await _borrowRepository.GetBorrowRecordsByMemberIdAsync(memberId);
             return records.Select(MapToResult);
         }
